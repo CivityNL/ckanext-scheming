@@ -80,6 +80,27 @@ scheming.dataset_schemas = ckanext.spatialx:spatialx_schema.yaml
 #   will try to load "spatialx_schema.yaml" and "spatialxy_schema.yaml"
 #   as dataset schemas
 
+#   Schemas can be declared alternatively using a "multi_schema" 
+#   The example bellow is for datasets, but also works for organizations and groups
+scheming.dataset_multi_schemas = ckanext.spatialx:spatialxyz_multi_schema.json 
+#
+#    Contents of "ckanext.spatialx:spatialxyz_multi_schema.json" :
+#      [{
+#          "dataset_type": "dataset",
+#          "about": "Dataset",
+#          "about_url": "http://example.com/dataset",
+#          "schemas": [
+#            "ckanext.spatialx:spatialx_schema.json",
+#            "ckanext.spatialx:spatialxy_schema.json"
+#          ]
+#        }]
+#   The result will be the same as using the above "scheming.dataset_schemas"
+#   This configuration is aimed at instances that want to make use of all of the following:
+#     - Multiple Dataset Types running on same instance
+#     - Use of generic Schemas that are applied in multiple dataset types
+#     - Have fine grain control on which schemas and in which order they are applied to each dataset type 
+
+
 #   For group and organization schemas (replace myplugin with your custom plugin)
 scheming.group_schemas = ckanext.scheming:group_with_bookface.json
                          ckanext.myplugin:/etc/ckan/default/group_with_custom_fields.json
@@ -95,6 +116,36 @@ scheming.presets = ckanext.scheming:presets.json
 
 #   The is_fallback setting may be changed as well. Defaults to false:
 scheming.dataset_fallback = false
+
+#   Changes strategy for combining Schemas. Either by only concatenating new information, or by overwriting the objects.
+#   Using the previous declared values in "scheming.dataset_schemas" bellow are the different Strategies illustrated:
+#
+#   schema_A.json = [{'dataset_type': 'dataset',
+#                     'about': 'Dataset A',
+#                     'dataset_fields': [{'field_name': 'title', 'label': 'Title'},
+#                                        {'field_name': 'notes', 'label': 'Notes'}]}]
+#   schema_B.json = [{'dataset_type': 'dataset',
+#                     'about': 'Dataset B',
+#                     'dataset_fields': [{'field_name': 'title', 'label': 'BIG TITLE', 'form_snippet': 'text.html'},
+#                                        {'field_name': 'theme', 'label': 'Theme'}]}]
+#   
+#   For overwrite_fields = false
+#   result = [{'dataset_type': 'dataset',
+#              'about': 'Dataset A',     <--- Kept value that was there
+#              'dataset_fields': [{'field_name': 'title', 'label': 'Title', 'form_snippet': 'text.html'}, <--- Kept label value from schema_A, but added key/value pair not present in schema_A
+#                                 {'field_name': 'notes', 'label': 'Notes'}, 
+#                                 {'field_name': 'theme', 'label': 'Theme'}]}] <--- Append field not in schema_A
+#   
+#  For overwrite_fields = true
+#   result = [{'dataset_type': 'dataset',
+#              'about': 'Dataset B',        <--- Overwritten value 
+#              'dataset_fields': [{'field_name': 'title', 'label': 'BIG TITLE', 'form_snippet': 'text.html'}, <--- Full field overwritten with schema_B
+#                                 {'field_name': 'notes', 'label': 'Notes'},
+#                                 {'field_name': 'theme', 'label': 'Theme'}]}]
+
+scheming.overwrite_fields = false
+
+
 ```
 
 ## Schema Types

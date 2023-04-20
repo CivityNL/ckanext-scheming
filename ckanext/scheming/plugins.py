@@ -4,6 +4,7 @@ import os
 import inspect
 import logging
 from functools import wraps
+from __builtin__ import basestring
 
 import six
 import yaml
@@ -17,6 +18,7 @@ except ImportError:
 import ckan.model as model
 from ckan.common import c, json
 from ckan.lib.navl.dictization_functions import unflatten, flatten_schema
+
 try:
     from ckan.lib.helpers import helper_functions as core_helper_functions
 except ImportError:  # CKAN <= 2.5
@@ -45,8 +47,14 @@ convert_to_extras = get_converter('convert_to_extras')
 convert_from_extras = get_converter('convert_from_extras')
 
 DEFAULT_PRESETS = 'ckanext.scheming:presets.json'
+MULTI_SCHEMA_SCHEMAS = 'schemas'
+OVERWRITE_FIELDS_WHEN_COMBINING = 'ckanext.scheming.overwrite_fields'
+DATASET_TYPE_KEYWORD_ALL = 'all'
+SORTING_FIELD_KEY = 'sort_order'
+FIELD_LISTS = ['dataset_fields', 'resource_fields']
 
 log = logging.getLogger(__name__)
+
 
 def run_once_for_caller(var_name, rval_fn):
     """
@@ -68,7 +76,9 @@ def run_once_for_caller(var_name, rval_fn):
             # inject local varible into caller to track separate calls (reloading)
             caller.f_locals[var_name] = None
             return fn(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -83,6 +93,7 @@ class _SchemingMixin(object):
     _presets = None
     _is_fallback = False
     _schema_urls = tuple()
+    _multi_schema_url = None
     _schemas = tuple()
     _expanded_schemas = tuple()
 
@@ -137,11 +148,19 @@ class _SchemingMixin(object):
             config.get(self.FALLBACK_OPTION, False)
         )
 
-        self._schema_urls = config.get(self.SCHEMA_OPTION, "").split()
-        self._schemas = _load_schemas(
-            self._schema_urls,
-            self.SCHEMA_TYPE_FIELD
-        )
+        if config.get(self.MULTI_SCHEMA_OPTION, False):
+            self._multi_schema_url = config.get(self.MULTI_SCHEMA_OPTION, "")
+            self._schemas = _load_multi_schemas(
+                self._multi_schema_url,
+                self.SCHEMA_TYPE_FIELD
+            )
+
+        else:
+            self._schema_urls = config.get(self.SCHEMA_OPTION, "").split()
+            self._schemas = _load_schemas(
+                self._schema_urls,
+                self.SCHEMA_TYPE_FIELD
+            )
 
         self._expanded_schemas = _expand_schemas(self._schemas)
 
@@ -201,6 +220,7 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
     p.implements(p.IValidators)
 
     SCHEMA_OPTION = 'scheming.dataset_schemas'
+    MULTI_SCHEMA_OPTION = 'scheming.dataset_multi_schemas'
     FALLBACK_OPTION = 'scheming.dataset_fallback'
     SCHEMA_TYPE_FIELD = 'dataset_type'
 
@@ -274,7 +294,7 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
             for f in composite_convert_fields:
                 if f not in unflat:
                     continue
-                data[(f,)] = json.dumps(unflat[f], default=lambda x:None if x == missing else x)
+                data[(f,)] = json.dumps(unflat[f], default=lambda x: None if x == missing else x)
                 convert_to_extras((f,), data, errors, context)
                 del data[(f,)]
 
@@ -407,7 +427,6 @@ def expand_form_composite(data, fieldnames):
             pass  # best-effort only
 
 
-
 class SchemingGroupsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
                            DefaultGroupForm, _SchemingMixin):
     p.implements(p.IConfigurer)
@@ -417,6 +436,7 @@ class SchemingGroupsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
     p.implements(p.IValidators)
 
     SCHEMA_OPTION = 'scheming.group_schemas'
+    MULTI_SCHEMA_OPTION = 'scheming.dataset_multi_schemas'
     FALLBACK_OPTION = 'scheming.group_fallback'
     SCHEMA_TYPE_FIELD = 'group_type'
     UNSPECIFIED_GROUP_TYPE = 'group'
@@ -447,6 +467,7 @@ class SchemingOrganizationsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
     p.implements(p.IValidators)
 
     SCHEMA_OPTION = 'scheming.organization_schemas'
+    MULTI_SCHEMA_OPTION = 'scheming.dataset_multi_schemas'
     FALLBACK_OPTION = 'scheming.organization_fallback'
     SCHEMA_TYPE_FIELD = 'organization_type'
     UNSPECIFIED_GROUP_TYPE = 'organization'
@@ -499,12 +520,140 @@ class SchemingNerfIndexPlugin(p.SingletonPlugin):
         return data_dict
 
 
+def _get_unique_types_for_schema_type(current_unique_types, schema_type):
+    new_unique_types = []
+
+    if isinstance(schema_type, list):
+        for schema_type_str in schema_type:
+            if schema_type_str not in current_unique_types:
+                new_unique_types.append(schema_type_str)
+
+    elif isinstance(schema_type, basestring):
+        if schema_type not in current_unique_types:
+            new_unique_types.append(schema_type)
+
+    return new_unique_types
+
+
+def _is_schema_type_all(schema_type):
+    return (isinstance(schema_type, list) and DATASET_TYPE_KEYWORD_ALL in schema_type) \
+        or (isinstance(schema_type, basestring) and schema_type.lower() == DATASET_TYPE_KEYWORD_ALL)
+
+
+def _initialize_loaded_schemas_for_unique_types(type_field, unique_types):
+    initialized_loaded_schemas = {}
+
+    if len(unique_types) == 0:
+        initialized_loaded_schemas = {'dataset': {'dataset_type': 'dataset'}}
+    else:
+        for unique_schema in unique_types:
+            initialized_loaded_schemas[unique_schema] = {type_field: unique_schema}
+
+    return initialized_loaded_schemas
+
+
+def _load_multi_schemas(multi_schema_url, type_field):
+    '''
+    Example of multi_schema:
+    [
+        {
+        "dataset_type": "dataset",
+        "about":"Dataset",
+        "about_url":"https://dataplatform.nl/what-is-a-dataset",
+        "schemas":["path/to/schema_AAA.json", "path/to/schema_BBB.json", "path/to/schema_CCC.json"]
+      },
+      {
+        "dataset_type": "factsheet",
+        "about":"Factsheet",
+        "about_url":"https://dataplatform.nl/what-is-a-factsheet",
+        "schemas":["path/to/schema_CCC.json", "path/to/schema_AAA.json", "path/to/schema_DDD.json"]
+      }
+    ]
+    :param multi_schema_url: a string to the path/url of the multi_schema
+    :param type_field: the type of schema. e.g. 'dataset_type', 'group_type', 'organization_type'
+    :return:
+    '''
+    loaded_schemas = {}
+
+    # Loads the configuration of the multi_schemas
+    multi_schemas = _load_schema(multi_schema_url)
+
+    for multi_schema in multi_schemas:
+        schemas = multi_schema.pop(MULTI_SCHEMA_SCHEMAS)
+        loaded_schema = multi_schema
+        entity_type = loaded_schema.get(type_field, '')
+
+        for schema_url in schemas:
+            schema = _load_schema(schema_url)
+            loaded_schema = _combine_schemas(type_field, loaded_schema, schema)
+
+        loaded_schemas[entity_type] = loaded_schema.copy()
+
+    return loaded_schemas
+
+
 def _load_schemas(schemas, type_field):
-    out = {}
-    for n in schemas:
-        schema = _load_schema(n)
-        out[schema[type_field]] = schema
-    return out
+    """
+    Extends basic loading schemas functionality with:
+    - Extendable Schemas. Declared in multiple .json files, those will be grouped by dataset_type
+        - Order of declaration matters
+    - Accept lists of strings as a valid dataset_type value. Allows to implement schema for multiple dataset types
+    without forcing it to be applied to all.
+        - e.g. ['dataset, 'factsheet']
+    - Special dataset_types keywords:
+        - "all" -> Fields will be applied to all unique schemas declared
+
+    :param schemas: list of schema's path from the configuration
+    :param type_field: Type of schema field
+    :return: Loaded Schemas
+    """
+
+    if len(schemas) == 0:
+        return {}
+
+    schemas_declared_in_config = []
+    unique_types = []
+    for schema_path in schemas:
+        schema = _load_schema(schema_path)
+        schemas_declared_in_config.append(schema)
+        schema_type = schema[type_field]
+
+        if not schema_type:
+            continue
+
+        if _is_schema_type_all(schema_type):
+            continue
+
+        unique_types.extend(_get_unique_types_for_schema_type(unique_types, schema_type))
+
+    #  Initialize all unique schemas to {} (set defaults to "dataset", if no unique ones)
+    loaded_schemas = _initialize_loaded_schemas_for_unique_types(type_field, unique_types)
+    # Load the schemas in order that they were declared in the config file
+    # Combining them with the same schema types
+    for declared_schema in schemas_declared_in_config:
+
+        declared_schema_type = declared_schema[type_field]
+
+        if _is_schema_type_all(declared_schema_type):
+            for key in loaded_schemas:
+                loaded_schemas[key] = _combine_schemas(type_field, loaded_schemas[key], declared_schema)
+
+        elif isinstance(declared_schema_type, basestring):
+            loaded_schemas[declared_schema_type] = _combine_schemas(type_field, loaded_schemas[declared_schema_type],
+                                                                    declared_schema)
+        elif isinstance(declared_schema_type, list):
+            for declared_schema_type_str in declared_schema_type:
+                loaded_schemas[declared_schema_type_str] = _combine_schemas(type_field,
+                                                                            loaded_schemas[declared_schema_type_str],
+                                                                            declared_schema)
+        else:
+            log.warning('Schema not loaded due to value of {} = {}'.format(type_field, declared_schema_type))
+
+    # Sort fields within each schema
+    for schema_name in loaded_schemas:
+        loaded_schemas[schema_name] = _sort_schema(loaded_schemas[schema_name])
+
+    return loaded_schemas
 
 
 def _load_schema(url):
@@ -683,3 +832,123 @@ def _expand_schemas(schemas):
 
         out[name] = schema
     return out
+
+
+def _combine_schemas(type_field, base_schema, schema_to_combine):
+    """
+    This function will combine a schema into other existing schema
+        - Fields not in the base_schema are added.
+        - For fields present in the base_schema, depends based on type and configuration options:
+            - strings: choose between base or new value according to the OVERWRITE_FIELDS_WHEN_COMBINING config option.
+            - lists:
+                - Concatenating or Overwriting the existing fields and it's values (for lists)
+    :param base_schema: Schema used as basis; no information from this will be overwritten. Only added
+    :param schema_to_combine: Schema to add
+    :return: The combined Schema
+    """
+    field_identifier_key = 'field_name'
+    result = base_schema.copy()
+    for key in schema_to_combine:
+
+        # Avoids conflicts with type_field that might be of different types (str vs list). Keeps Unique Schema Type.
+        if key == type_field:
+            continue
+
+        if key not in result:
+            result[key] = schema_to_combine[key]
+        else:
+            current_item = base_schema[key]
+            new_item = schema_to_combine[key]
+
+            if isinstance(current_item, basestring) and isinstance(new_item, basestring):
+                result[key] = _combine_strings(current_item, new_item)
+            elif isinstance(current_item, list) and isinstance(new_item, list):
+                result[key] = _combine_lists(current_item, new_item, field_identifier_key)
+    return result
+
+
+def _combine_strings(current_string, new_string):
+    """
+    Returns one of the two strings, depending on the config OVERWRITE_FIELDS_WHEN_COMBINING.
+    :param current_string: String used as basis;
+    :param new_string: String to add
+    :return: String
+    """
+    if p.toolkit.asbool(p.toolkit.config.get(OVERWRITE_FIELDS_WHEN_COMBINING, False)):
+        result = new_string
+    else:
+        result = current_string
+    return result
+
+
+def _combine_lists(list_a, list_b, field_identifier_key):
+    """
+    This function will combine two list's containing items with a specific field making them unique. Only unique items
+    will be returned (so items in the current list and items from the new list that are not in the current list
+    :param current_list: List used as basis; no item from this list will be changed. Only items will be added
+    :param new_list: List to add
+    :param field_identifier_key: Field name which makes an item unique in the list
+    :return: Combined list
+    """
+    combined_list = list(list_a)
+    for new_field in list_b:
+        new_field_name = new_field[field_identifier_key]
+        existing_field = get_field_in_list(combined_list, new_field_name, field_identifier_key)
+        if existing_field:
+            combined_field = _combine_fields(existing_field, new_field)
+            idx = combined_list.index(existing_field)
+            combined_list[idx] = combined_field
+        else:
+            combined_list.append(new_field)
+
+    return combined_list
+
+
+def get_field_in_list(field_list, field_name, field_identifier_key):
+    for field in field_list:
+        if field[field_identifier_key] == field_name:
+            return field
+    return None
+
+
+def _combine_fields(current_field, new_field):
+    """
+    This function will combine two fields and return the result.
+    Depending on the configuration "overwrite_fields" the result will be either
+    the new field, or a concatenation of both keeping values of current_field
+    when there are duplicates.
+    :param current_field: Field used as basis;
+    :param new_field: Field to add
+    :return: Combined Field
+    """
+
+    if p.toolkit.asbool(p.toolkit.config.get(OVERWRITE_FIELDS_WHEN_COMBINING, False)):
+        combined_field = new_field
+    else:
+        combined_field = current_field
+        for key in new_field:
+            combined_field[key] = new_field[key]
+
+    return combined_field
+
+
+def _sort_schema(schema):
+    sorted_schema = {}
+    for key in schema:
+        if key in FIELD_LISTS and isinstance(schema[key], list):
+            sorted_schema[key] = _sort_fields(schema[key])
+        else:
+            sorted_schema[key] = schema[key]
+    return sorted_schema
+
+
+def _sort_fields(field_list, sorting_field=SORTING_FIELD_KEY):
+    """
+    This function will sort the fields in the schema
+    making use of the field attribute SORTING_FIELD_KEY (when set)
+    otherwise will have the default behavior.
+    :param field_list: Fields to sort
+    :param sorting_field: Field used as sorting criteria
+    :return: Sorted List
+    """
+    return sorted(field_list, key=lambda k: (sorting_field not in k, k.get(sorting_field, None)))
