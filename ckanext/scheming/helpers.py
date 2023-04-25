@@ -8,6 +8,7 @@ import six
 
 from jinja2 import Environment
 from ckantoolkit import config, _
+import ckan.plugins.toolkit as toolkit
 
 from ckanapi import LocalCKAN, NotFound, NotAuthorized
 
@@ -445,3 +446,23 @@ def scheming_flatten_subfield(subfield, data):
         for k in record:
             flat[prefix + k] = record[k]
     return flat
+
+
+@helper
+def scheming_package_type_list():
+    package_type_list = []
+
+    scheming_package_types = toolkit.get_action('scheming_dataset_schema_list')()
+
+    for package_type in scheming_package_types:
+        dataset_schema = toolkit.get_action('scheming_dataset_schema_show')(None, {'type': package_type})
+
+        package_type_dict = {
+            'package_type': package_type,
+            'display_text': dataset_schema.get('about', package_type),
+            'fa_icon': dataset_schema.get('fa_icon', '')
+        }
+        package_type_list.append(package_type_dict)
+
+    return package_type_list
+

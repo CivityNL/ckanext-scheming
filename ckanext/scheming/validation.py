@@ -378,7 +378,7 @@ def convert_from_extras_group(key, data, errors, context):
 
     for data_key, data_value in data.items():
         if (data_key[0] == 'extras'
-            and 'key' in data_value
+                and 'key' in data_value
                 and data_value['key'] == key[-1]):
             data[key] = data_value['value']
             break
@@ -422,6 +422,7 @@ def scheming_multiple_text(field, schema):
 
        "Person One"
     """
+
     def _scheming_multiple_text(key, data, errors, context):
         # just in case there was an error before our validator,
         # bail out here because our errors won't be useful
@@ -450,8 +451,8 @@ def scheming_multiple_text(field, schema):
                     try:
                         element = element.decode('utf-8')
                     except UnicodeDecodeError:
-                        errors[key]. append(_('invalid encoding for "%s" value')
-                                            % element)
+                        errors[key].append(_('invalid encoding for "%s" value')
+                                           % element)
                         continue
 
                 out.append(element)
@@ -482,3 +483,23 @@ def repeating_text_output(value):
         return json.loads(value)
     except ValueError:
         return [value]
+
+
+@scheming_validator
+@register_validator
+def tags_scheming_required(field, schema):
+    """
+    not_empty if field['required'] else ignore_missing
+    """
+    if field.get('required'):
+        return _tags_not_empty
+    return ignore_missing
+
+
+def _tags_not_empty(key, data, errors, context):
+    value = data.get(key)
+    db_key = ('tags', 0, 'name')
+
+    if (not value or value is missing) and (db_key not in data):
+        errors[key].append(_('Missing value'))
+        raise StopOnError
