@@ -436,7 +436,7 @@ class SchemingGroupsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
     p.implements(p.IValidators)
 
     SCHEMA_OPTION = 'scheming.group_schemas'
-    MULTI_SCHEMA_OPTION = 'scheming.dataset_multi_schemas'
+    MULTI_SCHEMA_OPTION = 'scheming.group_multi_schemas'
     FALLBACK_OPTION = 'scheming.group_fallback'
     SCHEMA_TYPE_FIELD = 'group_type'
     UNSPECIFIED_GROUP_TYPE = 'group'
@@ -467,7 +467,7 @@ class SchemingOrganizationsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
     p.implements(p.IValidators)
 
     SCHEMA_OPTION = 'scheming.organization_schemas'
-    MULTI_SCHEMA_OPTION = 'scheming.dataset_multi_schemas'
+    MULTI_SCHEMA_OPTION = 'scheming.organization_multi_schemas'
     FALLBACK_OPTION = 'scheming.organization_fallback'
     SCHEMA_TYPE_FIELD = 'organization_type'
     UNSPECIFIED_GROUP_TYPE = 'organization'
