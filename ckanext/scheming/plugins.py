@@ -4,7 +4,6 @@ import os
 import inspect
 import logging
 from functools import wraps
-from __builtin__ import basestring
 
 import six
 import yaml
@@ -528,7 +527,7 @@ def _get_unique_types_for_schema_type(current_unique_types, schema_type):
             if schema_type_str not in current_unique_types:
                 new_unique_types.append(schema_type_str)
 
-    elif isinstance(schema_type, basestring):
+    elif isinstance(schema_type, str):
         if schema_type not in current_unique_types:
             new_unique_types.append(schema_type)
 
@@ -537,7 +536,7 @@ def _get_unique_types_for_schema_type(current_unique_types, schema_type):
 
 def _is_schema_type_all(schema_type):
     return (isinstance(schema_type, list) and DATASET_TYPE_KEYWORD_ALL in schema_type) \
-        or (isinstance(schema_type, basestring) and schema_type.lower() == DATASET_TYPE_KEYWORD_ALL)
+        or (isinstance(schema_type, str) and schema_type.lower() == DATASET_TYPE_KEYWORD_ALL)
 
 
 def _initialize_loaded_schemas_for_unique_types(type_field, unique_types):
@@ -638,7 +637,7 @@ def _load_schemas(schemas, type_field):
             for key in loaded_schemas:
                 loaded_schemas[key] = _combine_schemas(type_field, loaded_schemas[key], declared_schema)
 
-        elif isinstance(declared_schema_type, basestring):
+        elif isinstance(declared_schema_type, str):
             loaded_schemas[declared_schema_type] = _combine_schemas(type_field, loaded_schemas[declared_schema_type],
                                                                     declared_schema)
         elif isinstance(declared_schema_type, list):
@@ -860,7 +859,7 @@ def _combine_schemas(type_field, base_schema, schema_to_combine):
             current_item = base_schema[key]
             new_item = schema_to_combine[key]
 
-            if isinstance(current_item, basestring) and isinstance(new_item, basestring):
+            if isinstance(current_item, str) and isinstance(new_item, str):
                 result[key] = _combine_strings(current_item, new_item)
             elif isinstance(current_item, list) and isinstance(new_item, list):
                 result[key] = _combine_lists(current_item, new_item, field_identifier_key)
