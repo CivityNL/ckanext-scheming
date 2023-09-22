@@ -679,7 +679,7 @@ def _load_schema_module_path(url):
     if os.path.exists(p):
         if watch_file:
             watch_file(p)
-        with open(p) as schema_file:
+        with open(p, encoding='utf-8') as schema_file:
             return loader.load(schema_file)
 
 
