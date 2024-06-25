@@ -1,0 +1,9 @@
+{%- set values = data[field.field_name].split(",") -%}
+
+<ul class="tag-list">
+    {% for value in values %}
+    <li>
+        <a class="tag">{{ value }}</a>
+    </li>
+    {% endfor %}
+</ul>
