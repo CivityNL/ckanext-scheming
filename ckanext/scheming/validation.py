@@ -20,10 +20,14 @@ from ckantoolkit import (
 
 import ckanext.scheming.helpers as sh
 from ckanext.scheming.errors import SchemingException
+from ckan.plugins import toolkit
+from itertools import count
 
 OneOf = get_validator('OneOf')
 ignore_missing = get_validator('ignore_missing')
 not_empty = get_validator('not_empty')
+tag_length_validator = toolkit.get_validator("tag_length_validator")
+tag_name_validator = toolkit.get_validator("tag_name_validator")
 
 all_validators = {}
 
@@ -503,3 +507,31 @@ def _tags_not_empty(key, data, errors, context):
     if (not value or value is missing) and (db_key not in data):
         errors[key].append(_('Missing value'))
         raise StopOnError
+
+
+@register_validator
+def tag_string_convert_required(key, data, errors, context):
+    """Takes a list of tags that is a comma-separated string (in data[key])
+    and parses tag names. These are added to the data dict, enumerated. They
+    are also validated."""
+
+    if isinstance(data[key], six.string_types):
+        tags = [tag.strip() \
+                for tag in data[key].split(',') \
+                if tag.strip()]
+    else:
+        tags = data[key]
+
+    current_index = max(
+        [int(k[1]) for k in data.keys() if len(k) == 3 and k[0] == 'tags'] + [
+            -1])
+
+    if not tags:
+        tags = []
+
+    for num, tag in zip(count(current_index + 1), tags):
+        data[('tags', num, 'name')] = tag
+
+    for tag in tags:
+        tag_length_validator(tag, context)
+        tag_name_validator(tag, context)
