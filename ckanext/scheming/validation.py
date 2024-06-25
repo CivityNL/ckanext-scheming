@@ -510,7 +510,7 @@ def _tags_not_empty(key, data, errors, context):
 
 
 @register_validator
-def tag_string_convert_required(key, data, errors, context):
+def scheming_tag_string_convert_required(key, data, errors, context):
     """Takes a list of tags that is a comma-separated string (in data[key])
     and parses tag names. These are added to the data dict, enumerated. They
     are also validated."""
