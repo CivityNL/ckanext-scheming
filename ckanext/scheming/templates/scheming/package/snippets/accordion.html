@@ -1,0 +1,24 @@
+{% import 'macros/form.html' as form %}
+
+{#- This snippet loads an accordion element and populates it with a list of fields -#}
+{#- Example Usage: -#}
+{#- {%- snippet 'scheming/package/snippets/accordion.html', group=group, fields=group.dataset_fields, data=data, errors=errors, licenses=c.licenses, entity_type='dataset', object_type=dataset_type, pkg_name=pkg_name -%} -#}
+
+{% block accordion %}
+    {% asset 'ckanext-scheming/scheming_accordion_js' %}
+
+    <a id="accordion-{{ group.field_name }}" name="accordion-{{ group.field_name }}"
+       data-module="scheming_accordion"
+       class="accordion {% if accordion_expanded %}accordion-expanded{% endif %}">{{ h.scheming_language_text(group.label) }}</a>
+    <div class="panel">
+        {% block accordion_fields %}
+            {%- for field in fields -%}
+                {%- if field.form_snippet is not none -%}
+                    {%- snippet 'scheming/snippets/form_field.html',
+            field=field, data=data, errors=errors, licenses=licenses,
+            entity_type=entity_type, object_type=object_type, pkg_name=pkg_name -%}
+                {%- endif -%}
+            {%- endfor -%}
+        {% endblock %}
+    </div>
+{% endblock %}

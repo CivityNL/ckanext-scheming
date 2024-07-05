@@ -9,10 +9,12 @@ import six
 from jinja2 import Environment
 from ckantoolkit import config, _
 import ckan.plugins.toolkit as toolkit
+import ckanext.scheming.constants as const
 
 from ckanapi import LocalCKAN, NotFound, NotAuthorized
 
 all_helpers = {}
+
 
 def helper(fn):
     """
@@ -466,3 +468,91 @@ def scheming_package_type_list():
 
     return package_type_list
 
+
+def _get_groups_enabled():
+    """
+    Get the config property that specifies if groups should be enabled
+    """
+    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_GROUPS_ENABLED, False))
+
+
+@helper
+def scheming_get_groups_enabled_for_package():
+    """
+    Get the config property that specifies if groups should be enabled
+    """
+    return _get_groups_enabled() and toolkit.asbool(
+        toolkit.config.get(const.CKANEXT_SCHEMING_GROUPS_ENABLED_FOR_PACKAGE, False))
+
+
+@helper
+def scheming_get_groups_enabled_for_resource():
+    """
+    Get the config property that specifies if groups should be enabled
+    """
+    return _get_groups_enabled() and toolkit.asbool(
+        toolkit.config.get(const.CKANEXT_SCHEMING_GROUPS_ENABLED_FOR_RESOURCE, False))
+
+
+def _get_required_fields_filter():
+    """
+    Get the config property that specifies if required fields filter should be enabled
+    """
+    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_REQUIRED_FIELDS_FILTER, False))
+
+
+@helper
+def scheming_get_required_fields_filter_for_package():
+    """
+    Get the config property that specifies if required fields filter for packages should be enabled
+    """
+    return _get_required_fields_filter() and toolkit.asbool(
+        toolkit.config.get(const.CKANEXT_SCHEMING_REQUIRED_FIELDS_FILTER_FOR_PACKAGE, False))
+
+
+@helper
+def scheming_get_required_fields_filter_for_resource():
+    """
+    Get the config property that specifies if required fields filter for resources should be enabled
+    """
+    return _get_required_fields_filter() and toolkit.asbool(
+        toolkit.config.get(const.CKANEXT_SCHEMING_REQUIRED_FIELDS_FILTER_FOR_RESOURCE, False))
+
+
+@helper
+def scheming_get_fields_to_hide(dataset_type='dataset', field_list='dataset_fields'):
+    """
+    Get the list of field names that are meant to be hidden in the UI by the functionality "required fields filter"
+    Criteria of those fields is:
+    - Fields that are not required AND are not hidden in the schema.
+    """
+    result = []
+    schema = toolkit.get_action('scheming_dataset_schema_show')(None, {'type': dataset_type})
+    if field_list in const.SCHEMA_KEYS_FOR_FIELD_LISTS:
+        desired_list = field_list
+    else:
+        return []
+
+    if desired_list in schema:
+        for field in schema[desired_list]:
+            if not _field_is_required(field) and _field_is_visible(field):
+                result.append(field['field_name'])
+
+    return result
+
+
+def _field_is_visible(field):
+    result = True
+
+    if 'hidden' in field.get('classes', []):
+        result = False
+
+    form_snippet = field.get('form_snippet', '')
+    if not form_snippet or form_snippet == "hidden.html":
+        result = False
+
+    return result
+
+
+def _field_is_required(field):
+    return toolkit.asbool(field.get('required', False))

@@ -1,41 +1,108 @@
 header.panel-heading {
-  position: relative;
+    position: relative;
 }
 
 /* try to resemble .btn-remove-url style in resource form */
 .btn.btn-danger.btn-repeating-remove {
-  position: absolute;
-  margin-right: 0;
-  top: 9px;
-  right: 7px;
-  padding: 0 12px;
-  border-radius: 100px;
+    position: absolute;
+    margin-right: 0;
+    top: 9px;
+    right: 7px;
+    padding: 0 12px;
+    border-radius: 100px;
 }
 
 li.multiple-text-field {
-  position: relative;
-  padding-bottom: 6px;
+    position: relative;
+    padding-bottom: 6px;
 }
 
 li.multiple-text-field input {
-  padding-right: 90px;
+    padding-right: 90px;
 }
 
 /* try to resemble .btn-remove-url style in resource form */
 a.btn.btn-multiple-remove {
-  position: absolute;
-  margin-right: 0;
-  top: 6px;
-  right: 7px;
-  padding: 0 12px;
-  border-radius: 100px;
+    position: absolute;
+    margin-right: 0;
+    top: 6px;
+    right: 7px;
+    padding: 0 12px;
+    border-radius: 100px;
 }
 
 /* remove ":" after form label */
 .radio-group label::after {
-  content: none;
+    content: none;
 }
 
 .radio-group label {
-  font-weight: normal;
+    font-weight: normal;
 }
+
+/* All the Accordion mentions are related with the  button to fold/unfold metadata fields that are grouped */
+.accordion {
+    color: #444;
+    cursor: pointer;
+    display: block;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 120%;
+    font-weight: bold;
+    transition: 0.4s;
+}
+
+.accordion-expanded, .accordion:hover {
+    color: #444;
+    text-decoration: none;
+}
+
+.accordion:before {
+    content: '\2BC8';
+    color: #444;
+    font-size: 120%;
+    font-weight: bold;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.accordion-expanded:before {
+    content: "\2BC6";
+}
+
+/* The panel is the inner div for the Accordion where the fields are populated */
+.accordion + .panel {
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+}
+
+.accordion-expanded + .panel {
+    max-height: 100%;
+}
+
+.checkbox-div {
+    width: 100%;
+    display: inline-block;
+}
+
+.checkbox-label {
+    float: right;
+    background-color: blue; /* For browsers that do not support gradients */
+    background-image: linear-gradient(to right, white, #009fe3);
+
+}
+
+/*
+This will make the checkbox on the right side of it's label, applied by id to not change the default css for .checkbox
+This will make sure the checkbox is centered to the label as well.
+ */
+#required_fields_checkbox {
+    position: static;
+    top: auto;
+    padding: 0;
+    margin: 4px;
+    float: right;
+}
+
