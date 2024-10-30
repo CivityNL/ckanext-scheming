@@ -103,3 +103,10 @@
 * fix for applying default org/group types
 * sync example dataset schemas, presets and templates with upstream ckan
   changes
+
+
+## 3.0.0+civity.1
+
+2024-10-28
+
+* reintroduced core CKAN functionality to update the state of a dataset
