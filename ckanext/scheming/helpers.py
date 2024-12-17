@@ -12,7 +12,10 @@ import ckan.plugins.toolkit as toolkit
 
 from ckanapi import LocalCKAN, NotFound, NotAuthorized
 
+from ckan import model
+
 all_helpers = {}
+
 
 def helper(fn):
     """
@@ -466,3 +469,20 @@ def scheming_package_type_list():
 
     return package_type_list
 
+
+@helper
+def scheming_group_list_choices(field):
+    """
+    Get the Group List and converts it to the Scheming Choices format
+    """
+    choices = []
+    context = {'model': model, 'session': model.Session,
+               'user': toolkit.c.user, 'auth_user_obj': toolkit.c.userobj,
+               'for_view': True}
+    groups = toolkit.get_action('group_list')(context, {'all_fields': True})
+
+    for group in groups:
+        choice = dict(value=group['name'], label=group['display_name'])
+        choices.append(choice)
+
+    return choices
