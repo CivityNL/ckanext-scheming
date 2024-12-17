@@ -110,3 +110,7 @@
 2024-10-28
 
 * reintroduced core CKAN functionality to update the state of a dataset
+
+## 3.0.0+civity.2
+
+* Added choices_helper with the group_list result 
