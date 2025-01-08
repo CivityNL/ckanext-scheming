@@ -404,6 +404,10 @@ def scheming_display_json_value(value, indent=2):
     except (TypeError, ValueError):
         return value
 
+@helper
+def scheming_show_organization_field(field, can_edit=False):
+    return not field.get("private", False) or can_edit
+
 
 @helper
 def scheming_render_from_string(source, **kwargs):
