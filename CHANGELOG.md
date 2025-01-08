@@ -110,3 +110,10 @@
 2024-10-28
 
 * reintroduced core CKAN functionality to update the state of a dataset
+* 
+
+## 3.0.0-civity.2
+
+2025-01-08
+
+* Added `redacted_value` and `private` fields for organizations to restricted access to field values for users that can't edit: `private=true` will make the field disappear in that case, otherwise the value will be replaced with the `redacted_value` if any is given.
