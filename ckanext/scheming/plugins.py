@@ -167,6 +167,7 @@ class _SchemingMixin(object):
         # Set to support Accordions in Edit Forms
         if p.toolkit.asbool(p.toolkit.config.get(CKANEXT_SCHEMING_GROUPS_ENABLED, False)):
             # https://civity.atlassian.net/browse/DEV-4200 - This will make loading the accordions easier for templates.
+            # Import added here due to circular import
             from ckanext.scheming.accordions import _add_groups_compiled_to_schemas
             self._expanded_schemas = _add_groups_compiled_to_schemas(self._expanded_schemas)
 
