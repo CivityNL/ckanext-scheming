@@ -123,3 +123,4 @@
 (???)
 
 * Updated version naming due to invalid version. From `3.0.0-civity.2` --> `3.0.0+civity.3` ([version guidelines](https://peps.python.org/pep-0440/#local-version-identifiers)). -- [CIVDEV-1378](https://civity.atlassian.net/browse/CIVDEV-1378)
+* Fix issue where some non required fields would not be hidden when toggling the checkbox.

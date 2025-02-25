@@ -546,13 +546,18 @@ def scheming_get_fields_to_hide(dataset_type='dataset', field_list='dataset_fiel
 
 
 def _field_is_visible(field):
+    """
+    Decides if a field is "visible" based on the following criterias:
+        - If it has "hidden" as a class
+        - If it has a defined form_snippet with a value of "hidden.html"
+    """
     result = True
 
     if 'hidden' in field.get('classes', []):
         result = False
 
     form_snippet = field.get('form_snippet', '')
-    if not form_snippet or form_snippet == "hidden.html":
+    if form_snippet == "hidden.html":
         result = False
 
     return result
