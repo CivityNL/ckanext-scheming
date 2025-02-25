@@ -60,7 +60,6 @@
     </p>
   {%- endif -%}
 
-    <!-- -->
     {%- if h.scheming_get_required_fields_filter_for_package() -%}
         {%- snippet 'scheming/package/snippets/checkbox.html',
             name='required_fields_checkbox',
@@ -71,9 +70,10 @@
             dataset_type=dataset_type,
             field_list_name='dataset_fields' -%}
     {%- endif -%}
+
   {%- set schema = h.scheming_get_dataset_schema(dataset_type) -%}
   {%- set pages = h.scheming_get_dataset_form_pages(dataset_type) -%}
-{#    TODO add form fields accordions in it's own snippet. to avoid duplicated shit '#}
+
   {%- if h.scheming_get_groups_enabled_for_package() -%}
         {%- for group in schema.compiled_groups -%}
             {%- if 'dataset_fields' in group and group.dataset_fields|length > 0 -%}
@@ -87,24 +87,23 @@
                     accordion_expanded=group.accordion_expanded -%}
             {%- endif -%}
         {%- endfor -%}
-    {%- elif pages -%}
-    {%- set active_page = data.get('_form_page', 1) | int -%}
-    {%- set fields = pages[active_page - 1]['fields'] -%}
   {%- else -%}
-    {%- set fields = schema.dataset_fields -%}
-  {%- endif -%}
-  {%- for field in fields -%}
-    {%- if field.form_snippet is not none -%}
-      {%- snippet 'scheming/snippets/form_field.html',
-        field=field,
-        data=data,
-        errors=errors,
-        licenses=c.licenses,
-        entity_type='dataset',
-        object_type=dataset_type
+      {%- if pages -%}
+        {%- set active_page = data.get('_form_page', 1) | int -%}
+        {%- set fields = pages[active_page - 1]['fields'] -%}
+      {%- else -%}
+        {%- set fields = schema.dataset_fields -%}
+      {%- endif -%}
+        {%- snippet 'scheming/snippets/form_fields.html',
+            fields=fields,
+            data=data,
+            errors=errors,
+            licenses=c.licenses,
+            entity_type='dataset',
+            object_type=dataset_type
       -%}
-    {%- endif -%}
-  {%- endfor -%}
+  {%- endif -%}
+
 
   {%- if pages -%}
     <input type="hidden" name="_ckan_phase" value="{{ active_page }}" />
@@ -142,9 +141,6 @@
 {% endblock %}
 
 {% block metadata_fields %}
-  <!-- Disable option for custom schema fields added by users. -->
-  {% block package_metadata_fields_custom %}
-  {% endblock %}
 {% endblock %}
 
 {% block save_button_text %}

@@ -44,30 +44,37 @@
   {%- endif -%}
 
   {%- if h.scheming_get_required_fields_filter_for_resource() -%}
-    {%- snippet 'scheming/package/snippets/checkbox.html', name='required_fields_checkbox', id='required_fields_checkbox',label=_('Show only required fields'),value=True, checked=False, dataset_type=dataset_type, field_list_name='resource_fields' -%}
+    {%- snippet 'scheming/package/snippets/checkbox.html',
+        name='required_fields_checkbox',
+        id='required_fields_checkbox',
+        label=_('Show only required fields'),
+        value=True,
+        checked=False,
+        dataset_type=dataset_type,
+        field_list_name='resource_fields' -%}
   {%- endif -%}
+
   {%- set schema = h.scheming_get_dataset_schema(dataset_type) -%}
+
   {%- if h.scheming_get_groups_enabled_for_resource() -%}
     {%- for group in schema.compiled_groups -%}
       {%- snippet 'scheming/package/snippets/accordion.html', group=group, fields=group.resource_fields, data=data, errors=errors, licenses=c.licenses, entity_type='dataset', object_type=dataset_type, pkg_name=pkg_name -%}
     {%- endfor -%}
   {%- else -%}
-  {%- for field in schema.resource_fields -%}
-    {%- if field.form_snippet is not none -%}
-      {%- snippet 'scheming/snippets/form_field.html',
-        field=field,
+      {% set fields = schema.resource_fields %}
+      {%- snippet 'scheming/snippets/form_fields.html',
+        fields=fields,
         data=data,
         errors=errors,
         licenses=c.licenses,
         entity_type='dataset',
         object_type=dataset_type
       -%}
-    {%- endif -%}
-  {%- endfor -%}
   {%- endif -%}
 
 {% endblock %}
 
 
 {% block metadata_fields %}
+  <!-- Disabled option for custom schema fields added by users. -->
 {% endblock %}
