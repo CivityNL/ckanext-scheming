@@ -33,9 +33,6 @@ def _add_compiled_field_groups_to_schema(schema):
     if len(valid_field_groups) == 0:
         return schema
 
-    for field_group in valid_field_groups:
-        log.info('field_group = {}'.format(field_group))
-
     # Initialize each valid field_group with [] for each of SCHEMING_FIELD_LISTS ('dataset_fields' and 'resource_fields')
     compiled_field_groups_dict = {
         field_group[FIELD_GROUP_IDENTIFIER_KEY]: {key: [] for key in SCHEMING_FIELD_LISTS}
