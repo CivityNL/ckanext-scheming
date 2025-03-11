@@ -39,7 +39,8 @@ from ckantoolkit import (
 
 from ckanext.scheming import helpers, validation, logic, loader, views
 from ckanext.scheming.errors import SchemingException
-from ckanext.scheming.constants import CKANEXT_SCHEMING_GROUPS_ENABLED
+from ckanext.scheming.constants import CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED, \
+    CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED
 
 ignore_missing = get_validator('ignore_missing')
 not_empty = get_validator('not_empty')
@@ -165,11 +166,12 @@ class _SchemingMixin(object):
         self._expanded_schemas = _expand_schemas(self._schemas)
 
         # Set to support Accordions in Edit Forms
-        if p.toolkit.asbool(p.toolkit.config.get(CKANEXT_SCHEMING_GROUPS_ENABLED, False)):
+        if (p.toolkit.asbool(p.toolkit.config.get(CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED, False))
+                or p.toolkit.asbool(p.toolkit.config.get(CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED, False))):
             # https://civity.atlassian.net/browse/DEV-4200 - This will make loading the accordions easier for templates.
             # Import added here due to circular import
-            from ckanext.scheming.accordions import _add_groups_compiled_to_schemas
-            self._expanded_schemas = _add_groups_compiled_to_schemas(self._expanded_schemas)
+            from ckanext.scheming.accordions import _add_compiled_field_groups_to_schemas
+            self._expanded_schemas = _add_compiled_field_groups_to_schemas(self._expanded_schemas)
 
 
     def is_fallback(self):

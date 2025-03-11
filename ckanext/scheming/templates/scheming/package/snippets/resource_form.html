@@ -43,7 +43,7 @@
     </p>
   {%- endif -%}
 
-  {%- if h.scheming_get_required_fields_filter_for_resource() -%}
+  {%- if h.scheming_get_form_filter_for_required_fields_enabled_in_resource_config() -%}
     {%- snippet 'scheming/package/snippets/checkbox.html',
         name='required_fields_checkbox',
         id='required_fields_checkbox',
@@ -56,9 +56,17 @@
 
   {%- set schema = h.scheming_get_dataset_schema(dataset_type) -%}
 
-  {%- if h.scheming_get_groups_enabled_for_resource() -%}
-    {%- for group in schema.compiled_groups -%}
-      {%- snippet 'scheming/package/snippets/accordion.html', group=group, fields=group.resource_fields, data=data, errors=errors, licenses=c.licenses, entity_type='dataset', object_type=dataset_type, pkg_name=pkg_name -%}
+  {%- if h.scheming_get_field_group_for_resources_enabled_config() -%}
+    {%- for field_group in schema.compiled_field_groups -%}
+      {%- snippet 'scheming/package/snippets/accordion.html',
+            field_group=field_group,
+            fields=field_group.resource_fields,
+            data=data,
+            errors=errors,
+            licenses=c.licenses,
+            entity_type='dataset',
+            object_type=dataset_type,
+            pkg_name=pkg_name -%}
     {%- endfor -%}
   {%- else -%}
       {% set fields = schema.resource_fields %}

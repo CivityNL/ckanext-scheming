@@ -7,9 +7,9 @@
 {% block accordion %}
     {% asset 'ckanext-scheming/scheming_accordion_js' %}
 
-    <a id="accordion-{{ group.field_name }}" name="accordion-{{ group.field_name }}"
+    <a id="accordion-{{ field_group.field_group_name }}" name="accordion-{{ field_group.field_group_name }}"
        data-module="scheming_accordion"
-       class="accordion {% if accordion_expanded %}accordion-expanded{% endif %}">{{ h.scheming_language_text(group.label) }}</a>
+       class="accordion {% if accordion_expanded %}accordion-expanded{% endif %}">{{ h.scheming_language_text(field_group.label) }}</a>
     <div class="panel">
         {% block accordion_fields %}
             {%- snippet 'scheming/snippets/form_fields.html',

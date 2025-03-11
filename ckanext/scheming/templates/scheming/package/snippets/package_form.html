@@ -60,7 +60,7 @@
     </p>
   {%- endif -%}
 
-    {%- if h.scheming_get_required_fields_filter_for_package() -%}
+    {%- if h.scheming_get_form_filter_for_required_fields_enabled_in_package_config() -%}
         {%- snippet 'scheming/package/snippets/checkbox.html',
             name='required_fields_checkbox',
             id='required_fields_checkbox',
@@ -74,17 +74,17 @@
   {%- set schema = h.scheming_get_dataset_schema(dataset_type) -%}
   {%- set pages = h.scheming_get_dataset_form_pages(dataset_type) -%}
 
-  {%- if h.scheming_get_groups_enabled_for_package() -%}
-        {%- for group in schema.compiled_groups -%}
-            {%- if 'dataset_fields' in group and group.dataset_fields|length > 0 -%}
+  {%- if h.scheming_get_field_group_for_packages_enabled_config() -%}
+        {%- for field_group in schema.compiled_field_groups -%}
+            {%- if 'dataset_fields' in field_group and field_group.dataset_fields|length > 0 -%}
                 {%- snippet 'scheming/package/snippets/accordion.html',
-                    group=group,
-                    fields=group.dataset_fields,
+                    field_group=field_group,
+                    fields=field_group.dataset_fields,
                     data=data, errors=errors,
                     licenses=c.licenses,
                     entity_type='dataset',
                     object_type=dataset_type,
-                    accordion_expanded=group.accordion_expanded -%}
+                    accordion_expanded=field_group.accordion_expanded -%}
             {%- endif -%}
         {%- endfor -%}
   {%- else -%}

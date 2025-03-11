@@ -473,54 +473,37 @@ def scheming_package_type_list():
     return package_type_list
 
 
-def _get_groups_enabled():
+
+@helper
+def scheming_get_field_group_for_packages_enabled_config():
     """
     Get the config property that specifies if groups should be enabled
     """
-    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_GROUPS_ENABLED, False))
+    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED, False))
 
 
 @helper
-def scheming_get_groups_enabled_for_package():
+def scheming_get_field_group_for_resources_enabled_config():
     """
     Get the config property that specifies if groups should be enabled
     """
-    return _get_groups_enabled() and toolkit.asbool(
-        toolkit.config.get(const.CKANEXT_SCHEMING_GROUPS_ENABLED_FOR_PACKAGE, False))
+    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED, False))
 
 
 @helper
-def scheming_get_groups_enabled_for_resource():
-    """
-    Get the config property that specifies if groups should be enabled
-    """
-    return _get_groups_enabled() and toolkit.asbool(
-        toolkit.config.get(const.CKANEXT_SCHEMING_GROUPS_ENABLED_FOR_RESOURCE, False))
-
-
-def _get_required_fields_filter():
-    """
-    Get the config property that specifies if required fields filter should be enabled
-    """
-    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_REQUIRED_FIELDS_FILTER, False))
-
-
-@helper
-def scheming_get_required_fields_filter_for_package():
+def scheming_get_form_filter_for_required_fields_enabled_in_package_config():
     """
     Get the config property that specifies if required fields filter for packages should be enabled
     """
-    return _get_required_fields_filter() and toolkit.asbool(
-        toolkit.config.get(const.CKANEXT_SCHEMING_REQUIRED_FIELDS_FILTER_FOR_PACKAGE, False))
+    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_PACKAGE, False))
 
 
 @helper
-def scheming_get_required_fields_filter_for_resource():
+def scheming_get_form_filter_for_required_fields_enabled_in_resource_config():
     """
     Get the config property that specifies if required fields filter for resources should be enabled
     """
-    return _get_required_fields_filter() and toolkit.asbool(
-        toolkit.config.get(const.CKANEXT_SCHEMING_REQUIRED_FIELDS_FILTER_FOR_RESOURCE, False))
+    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_RESOURCE, False))
 
 
 @helper
@@ -528,26 +511,27 @@ def scheming_get_fields_to_hide(dataset_type='dataset', field_list='dataset_fiel
     """
     Get the list of field names that are meant to be hidden in the UI by the functionality "required fields filter"
     Criteria of those fields is:
-    - Fields that are not required AND are not hidden in the schema.
+        - Fields that are not required.
+        - (AND) Fields that are visible.
+    The reason to check for visible fields is to avoid showing hidden fields that were not visible in the first place.
     """
-    result = []
+    fields_to_hide = []
     schema = toolkit.get_action('scheming_dataset_schema_show')(None, {'type': dataset_type})
-    if field_list in const.SCHEMA_KEYS_FOR_FIELD_LISTS:
-        desired_list = field_list
-    else:
-        return []
 
-    if desired_list in schema:
-        for field in schema[desired_list]:
-            if not _field_is_required(field) and _field_is_visible(field):
-                result.append(field['field_name'])
+    chosen_list = field_list if field_list in const.SCHEMING_FIELD_LISTS else []
 
-    return result
+    if chosen_list in schema:
+        fields_to_hide.extend(
+            field['field_name'] for field in schema[chosen_list]
+            if not _field_is_required(field) and _field_is_visible(field)
+        )
+
+    return fields_to_hide
 
 
 def _field_is_visible(field):
     """
-    Decides if a field is "visible" based on the following criterias:
+    Decides if a field is "visible" based on the following criteria:
         - If it has "hidden" as a class
         - If it has a defined form_snippet with a value of "hidden.html"
     """
