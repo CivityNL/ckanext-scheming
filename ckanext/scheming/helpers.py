@@ -475,35 +475,35 @@ def scheming_package_type_list():
 
 
 @helper
-def scheming_get_field_group_for_packages_enabled_config():
+def scheming_enable_field_groups_in_package_form():
     """
     Get the config property that specifies if groups should be enabled
     """
-    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED, False))
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED)
 
 
 @helper
-def scheming_get_field_group_for_resources_enabled_config():
+def scheming_enable_field_groups_in_resource_form():
     """
     Get the config property that specifies if groups should be enabled
     """
-    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED, False))
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED)
 
 
 @helper
-def scheming_get_form_filter_for_required_fields_enabled_in_package_config():
+def scheming_enable_required_fields_filter_in_package():
     """
     Get the config property that specifies if required fields filter for packages should be enabled
     """
-    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_PACKAGE, False))
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_PACKAGE)
 
 
 @helper
-def scheming_get_form_filter_for_required_fields_enabled_in_resource_config():
+def scheming_enable_required_fields_filter_in_resource():
     """
     Get the config property that specifies if required fields filter for resources should be enabled
     """
-    return toolkit.asbool(toolkit.config.get(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_RESOURCE, False))
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_RESOURCE)
 
 
 @helper

@@ -60,7 +60,7 @@
     </p>
   {%- endif -%}
 
-    {%- if h.scheming_get_form_filter_for_required_fields_enabled_in_package_config() -%}
+    {%- if h.scheming_enable_required_fields_filter_in_package() -%}
         {%- snippet 'scheming/package/snippets/checkbox.html',
             name='required_fields_checkbox',
             id='required_fields_checkbox',
@@ -74,7 +74,7 @@
   {%- set schema = h.scheming_get_dataset_schema(dataset_type) -%}
   {%- set pages = h.scheming_get_dataset_form_pages(dataset_type) -%}
 
-  {%- if h.scheming_get_field_group_for_packages_enabled_config() -%}
+  {%- if h.scheming_enable_field_groups_in_package_form() -%}
         {%- for field_group in schema.compiled_field_groups -%}
             {%- if 'dataset_fields' in field_group and field_group.dataset_fields|length > 0 -%}
                 {%- snippet 'scheming/package/snippets/accordion.html',
