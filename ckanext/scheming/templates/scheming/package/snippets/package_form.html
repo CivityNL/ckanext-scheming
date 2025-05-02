@@ -60,38 +60,50 @@
     </p>
   {%- endif -%}
 
+    {%- if h.scheming_enable_required_fields_filter_in_package() -%}
+        {%- snippet 'scheming/package/snippets/checkbox.html',
+            name='required_fields_checkbox',
+            id='required_fields_checkbox',
+            label=_('Show only required fields'),
+            value=True,
+            checked=False,
+            dataset_type=dataset_type,
+            field_list_name='dataset_fields' -%}
+    {%- endif -%}
+
   {%- set schema = h.scheming_get_dataset_schema(dataset_type) -%}
   {%- set pages = h.scheming_get_dataset_form_pages(dataset_type) -%}
-  {%- if pages -%}
-    {%- set active_page = data.get('_form_page', 1) | int -%}
-    {%- set fields = pages[active_page - 1]['fields'] -%}
+
+  {%- if h.scheming_enable_field_groups_in_package_form() -%}
+        {%- for field_group in schema.compiled_field_groups -%}
+            {%- if 'dataset_fields' in field_group and field_group.dataset_fields|length > 0 -%}
+                {%- snippet 'scheming/package/snippets/accordion.html',
+                    field_group=field_group,
+                    fields=field_group.dataset_fields,
+                    data=data, errors=errors,
+                    licenses=c.licenses,
+                    entity_type='dataset',
+                    object_type=dataset_type,
+                    accordion_expanded=field_group.accordion_expanded -%}
+            {%- endif -%}
+        {%- endfor -%}
   {%- else -%}
-    {%- set fields = schema.dataset_fields -%}
-  {%- endif -%}
-  {%- for field in fields -%}
-    {%- if field.form_snippet is not none -%}
-      {%- if field.field_name not in data %}
-        {# Set the field default value before rendering but only if
-        it doesn't already exist in data which would mean the form
-        has been submitted. #}
-        {% if field.default_jinja2 %}
-          {% do data.__setitem__(
-            field.field_name,
-            h.scheming_render_from_string(field.default_jinja2)) %}
-        {% elif field.default %}
-          {% do data.__setitem__(field.field_name, field.default) %}
-        {% endif %}
-      {% endif -%}
-      {%- snippet 'scheming/snippets/form_field.html',
-        field=field,
-        data=data,
-        errors=errors,
-        licenses=c.licenses,
-        entity_type='dataset',
-        object_type=dataset_type
+      {%- if pages -%}
+        {%- set active_page = data.get('_form_page', 1) | int -%}
+        {%- set fields = pages[active_page - 1]['fields'] -%}
+      {%- else -%}
+        {%- set fields = schema.dataset_fields -%}
+      {%- endif -%}
+        {%- snippet 'scheming/snippets/form_fields.html',
+            fields=fields,
+            data=data,
+            errors=errors,
+            licenses=c.licenses,
+            entity_type='dataset',
+            object_type=dataset_type
       -%}
-    {%- endif -%}
-  {%- endfor -%}
+  {%- endif -%}
+
 
   {%- if pages -%}
     <input type="hidden" name="_ckan_phase" value="{{ active_page }}" />
@@ -100,6 +112,20 @@
     <input type="hidden" name="_ckan_phase" value="" />
   {%- endif -%}
 
+    <!-- Show field for "state", useful for undeleting datasets TODO probably move this somewhere when using pages. -->
+    {% if data.id and h.check_access('package_delete', {'id': data.id}) and data.state != 'active' %}
+        <div class="control-group">
+            <label for="field-state" class="control-label">{{ _('State') }}</label>
+            <div class="controls">
+                <select id="field-state" name="state">
+                    <option value="active" {% if data.get('state', 'none') == 'active' %}
+                            selected="selected" {% endif %}>{{ _('Active') }}</option>
+                    <option value="deleted" {% if data.get('state', 'none') == 'deleted' %}
+                            selected="selected" {% endif %}>{{ _('Deleted') }}</option>
+                </select>
+            </div>
+        </div>
+    {% endif %}
   {% if data.id and h.check_access('package_delete', {'id': data.id}) and data.state != 'active' %}
     <div class="control-group">
       <label for="field-state" class="control-label">{{ _('State') }}</label>

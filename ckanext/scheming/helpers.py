@@ -9,10 +9,12 @@ import six
 from jinja2 import Environment
 from ckantoolkit import config, _
 import ckan.plugins.toolkit as toolkit
+import ckanext.scheming.constants as const
 
 from ckanapi import LocalCKAN, NotFound, NotAuthorized
 
 all_helpers = {}
+
 
 def helper(fn):
     """
@@ -470,3 +472,80 @@ def scheming_package_type_list():
 
     return package_type_list
 
+
+
+@helper
+def scheming_enable_field_groups_in_package_form():
+    """
+    Get the config property that specifies if groups should be enabled
+    """
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED)
+
+
+@helper
+def scheming_enable_field_groups_in_resource_form():
+    """
+    Get the config property that specifies if groups should be enabled
+    """
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED)
+
+
+@helper
+def scheming_enable_required_fields_filter_in_package():
+    """
+    Get the config property that specifies if required fields filter for packages should be enabled
+    """
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_PACKAGE)
+
+
+@helper
+def scheming_enable_required_fields_filter_in_resource():
+    """
+    Get the config property that specifies if required fields filter for resources should be enabled
+    """
+    return toolkit.h.get_boolean_config_option(const.CKANEXT_SCHEMING_FORM_FILTER_FOR_REQUIRED_FIELDS_ENABLED_IN_RESOURCE)
+
+
+@helper
+def scheming_get_fields_to_hide(dataset_type='dataset', field_list='dataset_fields'):
+    """
+    Get the list of field names that are meant to be hidden in the UI by the functionality "required fields filter"
+    Criteria of those fields is:
+        - Fields that are not required.
+        - (AND) Fields that are visible.
+    The reason to check for visible fields is to avoid showing hidden fields that were not visible in the first place.
+    """
+    fields_to_hide = []
+    schema = toolkit.get_action('scheming_dataset_schema_show')(None, {'type': dataset_type})
+
+    chosen_list = field_list if field_list in const.SCHEMING_FIELD_LISTS else []
+
+    if chosen_list in schema:
+        fields_to_hide.extend(
+            field['field_name'] for field in schema[chosen_list]
+            if not _field_is_required(field) and _field_is_visible(field)
+        )
+
+    return fields_to_hide
+
+
+def _field_is_visible(field):
+    """
+    Decides if a field is "visible" based on the following criteria:
+        - If it has "hidden" as a class
+        - If it has a defined form_snippet with a value of "hidden.html"
+    """
+    result = True
+
+    if 'hidden' in field.get('classes', []):
+        result = False
+
+    form_snippet = field.get('form_snippet', '')
+    if form_snippet == "hidden.html":
+        result = False
+
+    return result
+
+
+def _field_is_required(field):
+    return toolkit.asbool(field.get('required', False))

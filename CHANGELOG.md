@@ -117,3 +117,13 @@
 2025-01-08
 
 * Added `redacted_value` and `private` fields for organizations to restricted access to field values for users that can't edit: `private=true` will make the field disappear in that case, otherwise the value will be replaced with the `redacted_value` if any is given.
+
+## 3.0.0+civity.3
+
+(???)
+
+* Updated version naming due to invalid version. From `3.0.0-civity.2` --> `3.0.0+civity.3` ([version guidelines](https://peps.python.org/pep-0440/#local-version-identifiers)). -- [CIVDEV-1378](https://civity.atlassian.net/browse/CIVDEV-1378)
+* Fix issue where some non required fields would not be hidden when toggling the checkbox.
+* Added Harmonicas/Accordions + Checkbox for filtering mandatory fields in the form pages. [CIVDEV-1350](https://civity.atlassian.net/browse/CIVDEV-1350)
+  * Added support for "field_group" in the dataset schemas.
+  * Added support for "checkbox_filer_for_required_fields" in dataset form pages.
