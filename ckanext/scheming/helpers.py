@@ -568,4 +568,3 @@ def scheming_group_list_choices(field):
         choices.append(choice)
 
     return choices
-  
