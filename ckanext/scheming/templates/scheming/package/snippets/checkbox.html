@@ -1,0 +1,10 @@
+{% asset 'ckanext-scheming/scheming_checkbox_js' %}
+
+<div class="checkbox-div">
+    <label class="checkbox checkbox-label" for="{{ id or name }}">
+        {{ label or name }}
+        <input id="{{ id or name }}" type="checkbox" name="{{ name }}" value="{{ value | empty_and_escape }}"
+               data-module="scheming_checkbox"
+               data-module-fields={{ h.scheming_get_fields_to_hide(dataset_type, field_list_name)|join(',') }} class="checkbox-input" {{ "checked " if checked }} />
+    </label>
+</div>

@@ -20,3 +20,19 @@ multiple_text:
       - base/main
   contents:
     - js/scheming-multiple-text.js
+
+scheming_accordion_js:
+  output: ckanext-scheming/%(version)s_scheming_accordion_js.js
+  contents:
+    - js/scheming_accordion.js
+  extra:
+    preload:
+      - base/main
+
+scheming_checkbox_js:
+  output: ckanext-scheming/%(version)s_scheming_checkbox_js.js
+  contents:
+    - js/scheming_checkbox.js
+  extra:
+    preload:
+      - base/main

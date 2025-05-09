@@ -39,6 +39,8 @@ from ckantoolkit import (
 
 from ckanext.scheming import helpers, validation, logic, loader, views
 from ckanext.scheming.errors import SchemingException
+from ckanext.scheming.constants import CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED, \
+    CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED
 
 ignore_missing = get_validator('ignore_missing')
 not_empty = get_validator('not_empty')
@@ -162,6 +164,15 @@ class _SchemingMixin(object):
             )
 
         self._expanded_schemas = _expand_schemas(self._schemas)
+
+        # Set to support Accordions in Edit Forms
+        if (p.toolkit.h.get_boolean_config_option(CKANEXT_SCHEMING_FIELD_GROUP_FOR_PACKAGES_ENABLED)
+                or p.toolkit.h.get_boolean_config_option(CKANEXT_SCHEMING_FIELD_GROUP_FOR_RESOURCES_ENABLED)):
+            # https://civity.atlassian.net/browse/DEV-4200 - This will make loading the accordions easier for templates.
+            # Import added here due to circular import
+            from ckanext.scheming.accordions import _add_compiled_field_groups_to_schemas
+            self._expanded_schemas = _add_compiled_field_groups_to_schemas(self._expanded_schemas)
+
 
     def is_fallback(self):
         return self._is_fallback
@@ -457,6 +468,37 @@ class SchemingGroupsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
         }
 
 
+@p.toolkit.chained_action
+@p.toolkit.side_effect_free
+def _organization_show(original_action, context, data_dict):
+    # original organization_show
+    result = original_action(context, data_dict)
+    # check user rights
+    private_access = context.get('ignore_auth', False)
+    if not private_access:
+        try:
+            p.toolkit.check_access("organization_update", context, data_dict)
+            private_access = True
+        except p.toolkit.NotAuthorized:
+            private_access = False
+
+    if private_access:
+        return result
+
+    organization_schema = p.toolkit.get_action("scheming_organization_schema_show")(context, {"type": result.get("type")})
+    for field in organization_schema.get("fields"):
+        field_name = field.get("field_name")
+        private_field = field.get("private", False)
+        redacted_value = field.get("redacted_value", None)
+        if private_field:
+            if field_name in result:
+                del result[field_name]
+        elif redacted_value is not None:
+            if field_name in result:
+                result[field_name] = redacted_value
+    return result
+
+
 class SchemingOrganizationsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
                                   DefaultOrganizationForm, _SchemingMixin):
     p.implements(p.IConfigurer)
@@ -491,6 +533,8 @@ class SchemingOrganizationsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
                 logic.scheming_organization_schema_list,
             'scheming_organization_schema_show':
                 logic.scheming_organization_schema_show,
+            'organization_show':
+                _organization_show,
         }
 
 
