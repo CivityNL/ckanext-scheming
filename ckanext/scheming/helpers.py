@@ -13,8 +13,6 @@ import ckanext.scheming.constants as const
 
 from ckanapi import LocalCKAN, NotFound, NotAuthorized
 
-from ckan import model
-
 all_helpers = {}
 
 
@@ -558,9 +556,7 @@ def scheming_group_list_choices(field):
     Get the Group List and converts it to the Scheming Choices format
     """
     choices = []
-    context = {'model': model, 'session': model.Session,
-               'user': toolkit.c.user, 'auth_user_obj': toolkit.c.userobj,
-               'for_view': True}
+    context = {'user': toolkit.c.user, 'for_view': True}
     groups = toolkit.get_action('group_list')(context, {'all_fields': True})
 
     for group in groups:
