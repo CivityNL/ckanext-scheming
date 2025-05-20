@@ -473,7 +473,6 @@ def scheming_package_type_list():
     return package_type_list
 
 
-
 @helper
 def scheming_enable_field_groups_in_package_form():
     """
@@ -549,3 +548,19 @@ def _field_is_visible(field):
 
 def _field_is_required(field):
     return toolkit.asbool(field.get('required', False))
+
+
+@helper
+def scheming_group_list_choices(field):
+    """
+    Get the Group List and converts it to the Scheming Choices format
+    """
+    choices = []
+    context = {'user': toolkit.c.user, 'for_view': True}
+    groups = toolkit.get_action('group_list')(context, {'all_fields': True})
+
+    for group in groups:
+        choice = dict(value=group['name'], label=group['display_name'])
+        choices.append(choice)
+
+    return choices
