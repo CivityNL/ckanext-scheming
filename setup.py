@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '3.0.0+civity.4'
+version = '3.0.0+civity.4.1'
 
 setup(
     name='ckanext-scheming',

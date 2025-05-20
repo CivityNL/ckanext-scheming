@@ -128,4 +128,4 @@
 
 ## 3.0.0+civity.4
 
-* Added `scheming_group_list_choices` choices_helper [CIVDEV-1332](https://civity.atlassian.net/browse/CIVDEV-1332)
+* Added choices_helper `scheming_group_list_choices` [CIVDEV-1332](https://civity.atlassian.net/browse/CIVDEV-1332)
