@@ -130,6 +130,5 @@
 
 ## 3.0.0+civity.4
 
-(???)
 * WCAG-2.2 AA Compliance
   * Added conditional to render links only when data[field.field_name] is non-empty to prevent 'link-name' violation. - [CIVDEV-1562](https://civity.atlassian.net/browse/CIVDEV-1562)
