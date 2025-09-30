@@ -1,1 +1,4 @@
-{{ h.link_to(data[field.field_name], data[field.field_name], rel=field.display_property, target='_blank') }}
+<!--remove whitespace to avoids false positives like " " to be displayed as empty links -->
+{% if data[field.field_name]|trim %}
+  {{ h.link_to(data[field.field_name], data[field.field_name], rel=field.display_property, target='_blank') }}
+{% endif %}

@@ -120,6 +120,8 @@
 
 ## 3.0.0+civity.3
 
+2025-05-02
+
 * Updated version naming due to invalid version. From `3.0.0-civity.2` --> `3.0.0+civity.3` ([version guidelines](https://peps.python.org/pep-0440/#local-version-identifiers)). -- [CIVDEV-1378](https://civity.atlassian.net/browse/CIVDEV-1378)
 * Fix issue where some non required fields would not be hidden when toggling the checkbox.
 * Added Harmonicas/Accordions + Checkbox for filtering mandatory fields in the form pages. [CIVDEV-1350](https://civity.atlassian.net/browse/CIVDEV-1350)
@@ -128,3 +130,5 @@
 
 ## 3.0.0+civity.4
 
+* WCAG-2.2 AA Compliance
+  * Added conditional to render links only when data[field.field_name] is non-empty to prevent 'link-name' violation. - [CIVDEV-1562](https://civity.atlassian.net/browse/CIVDEV-1562)
